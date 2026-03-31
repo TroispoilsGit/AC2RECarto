@@ -3,6 +3,41 @@ html, body {
     margin: 0;
     padding: 0;
 }
+
+.data-folder-toolbar {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1100;
+    display: flex;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 999px;
+    padding: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.data-folder-toolbar button {
+    border: none;
+    border-radius: 999px;
+    background: #276749;
+    color: #fff;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.data-folder-toolbar button:hover {
+    background: #1f5a3d;
+}
+
+@media (max-width: 768px) {
+    .data-folder-toolbar {
+        bottom: 12px;
+    }
+}
+
 #map {
     height: 100vh; /* Hauteur de la fenêtre de visualisation */
     width: 100vw; /* Largeur de la fenêtre de visualisation */
@@ -21,4 +56,13 @@ html, body {
     box-shadow: 0 0 5px rgba(0,0,0,0.5);
     font-size: 16px;
     z-index: 1000; /* S'assure que l'overlay est visible au-dessus de la carte */
+}
+
+.leaflet-control-layers-section-title {
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #1f5a3d;
+    margin: 0 0 6px 0;
+    letter-spacing: 0.4px;
 }

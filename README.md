@@ -7,10 +7,48 @@ Cartographer of Asheron's Call 2 is a simple, lively 2D map tool built using Ele
 ## Features
 
 - **Interactive Map**: Explore the vast world of Asheron's Call 2 through an interactive 2D map interface.
-- **Custom Markers**: Mark important locations, quests, or points of interest on the map with customizable markers.
+- **POI Data Directory Picker**: Select the folder containing your POI `.json` files directly from the app (button or menu).
+- **Persistent Data Folder**: The selected POI folder is saved and restored automatically when the app restarts.
+- **Automatic JSON Discovery**: All `.json` files found in the selected data folder are loaded automatically.
+- **Base vs Additional POIs**: Built-in categories (Ringways, Gateways, PoI, Town, Outpost, Vault, Dungeon, City, Faction) are shown separately from extra JSON files.
+- **Additional POI Clustering**: Extra POIs are clustered with marker counts to keep the map smooth when many points are present.
 - **Zoom and Pan**: Zoom in and out, pan across the map to focus on specific regions.
 - **Responsive Design**: Works seamlessly on desktop and mobile devices for convenience.
 - **Simple and Lightweight**: Built with simplicity and performance in mind, ensuring a smooth user experience.
+
+## POI Data Format
+
+Each POI file must be a JSON array of objects containing coordinates:
+
+```json
+[
+   {
+      "x": 120.5,
+      "y": -42.0,
+      "description": "Optional popup text"
+   }
+]
+```
+
+- `x`: X coordinate (required)
+- `y`: Y coordinate (required)
+- `description`: Popup text (optional)
+
+### Base category file names
+
+These file names receive dedicated icons and appear under the **Base POIs** section:
+
+- `ringways.json`
+- `gateways.json`
+- `poi.json`
+- `town.json`
+- `outpost.json`
+- `vault.json`
+- `dungeon.json`
+- `city.json`
+- `faction.json`
+
+Any other `.json` file is listed under **Additional POIs** and uses clustering.
 
 ## Installation
 
