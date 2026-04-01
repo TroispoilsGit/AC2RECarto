@@ -6,6 +6,7 @@ var baseLayerControl = null;
 var extraLayerControl = null;
 
 const fallbackIcon = customIcons.greySquareIcon;
+const additionalPoiIcon = customIcons.redCrossAdditionalFullIcon || fallbackIcon;
 
 const iconByFileName = {
     ringways: customIcons.blueCircleVoidIcon,
@@ -56,15 +57,43 @@ function toLayerLabel(fileNameWithoutExt) {
     return fileNameWithoutExt.charAt(0).toUpperCase() + fileNameWithoutExt.slice(1);
 }
 
+function escapeHtml(text) {
+    return String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function getOverlayDisplayLabel(label, iconUrl) {
+    const safeLabel = escapeHtml(label);
+
+    if (!iconUrl) {
+        return safeLabel;
+    }
+
+    const safeIconUrl = escapeHtml(iconUrl);
+    return `<span class="poi-overlay-entry"><span class="poi-overlay-name">${safeLabel}</span><span class="poi-overlay-separator"> - </span><img class="poi-overlay-icon" src="${safeIconUrl}" alt=""></span>`;
+}
+
+function applyPoiControlClass(control) {
+    if (!control) {
+        return;
+    }
+
+    control.getContainer().classList.add('poi-overlay-control');
+}
+
 async function getOverlayMaps() {
     const jsonFiles = await listPoiJsonFiles();
 
     const layersEntries = await Promise.all(jsonFiles.map(async (fileName) => {
         const name = fileName.replace(/\.json$/i, '');
         const lowerName = name.toLowerCase();
-        const icon = iconByFileName[lowerName] || fallbackIcon;
         const label = toLayerLabel(name);
         const isBase = Object.prototype.hasOwnProperty.call(iconByFileName, lowerName);
+        const icon = isBase ? iconByFileName[lowerName] : additionalPoiIcon;
 
         try {
             const data = await initPoImarker(name);
@@ -84,13 +113,20 @@ async function getOverlayMaps() {
             } else {
                 layer = L.markerClusterGroup({
                     chunkedLoading: true,
+                    disableClusteringAtZoom: 6,
                     showCoverageOnHover: false,
-                    spiderfyOnMaxZoom: true,
+                    spiderfyOnMaxZoom: false,
                 });
                 layer.addLayers(markers);
             }
 
-            return { label, layer, isBase, lowerName };
+            return {
+                label,
+                layer,
+                isBase,
+                lowerName,
+                iconUrl: icon.options?.iconUrl || null,
+            };
         } catch (error) {
             console.error(`Error fetching ${fileName} data:`, error);
             return null;
@@ -109,15 +145,20 @@ async function getOverlayMaps() {
 
     const baseOverlays = {};
     baseEntries.forEach((entry) => {
-        baseOverlays[entry.label] = entry.layer;
+        const displayLabel = getOverlayDisplayLabel(entry.label, entry.iconUrl);
+        baseOverlays[displayLabel] = entry.layer;
     });
 
     const extraOverlays = {};
     extraEntries.forEach((entry) => {
-        extraOverlays[entry.label] = entry.layer;
+        const displayLabel = getOverlayDisplayLabel(entry.label, entry.iconUrl);
+        extraOverlays[displayLabel] = entry.layer;
     });
 
-    return { baseOverlays, extraOverlays };
+    return {
+        baseOverlays,
+      extraOverlays,
+    };
 }
 
 function addControlTitle(control, titleText) {
@@ -139,10 +180,12 @@ export default function InitialisationOverlay(map) {
 
         baseLayerControl = L.control.layers(null, baseOverlays, { collapsed: false }).addTo(map);
         addControlTitle(baseLayerControl, 'Base POIs');
+        applyPoiControlClass(baseLayerControl);
 
         if (Object.keys(extraOverlays).length > 0) {
             extraLayerControl = L.control.layers(null, extraOverlays, { collapsed: false }).addTo(map);
             addControlTitle(extraLayerControl, 'Additional POIs');
+            applyPoiControlClass(extraLayerControl);
         } else {
             extraLayerControl = null;
         }
