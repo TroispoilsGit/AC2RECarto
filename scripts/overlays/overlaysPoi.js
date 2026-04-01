@@ -1,6 +1,6 @@
 import initPoImarker, { listPoiJsonFiles } from '../modules/poi.js';
 import customIcons from '../modules/iconsMap.js';
-import npcLocOverlay from "./overlaysNpc.js";
+import { getAppConfig } from '../modules/dataDirectory.js';
 
 var baseLayerControl = null;
 var extraLayerControl = null;
@@ -44,6 +44,29 @@ const labelByFileName = {
     faction: 'Faction',
 };
 
+const defaultPoiClusterOptions = {
+    chunkedLoading: true,
+    disableClusteringAtZoom: 6,
+    showCoverageOnHover: false,
+    spiderfyOnMaxZoom: false,
+};
+
+function getPoiClusterOptions(appConfig) {
+    const rawOptions = appConfig?.poiCluster;
+    if (!rawOptions || typeof rawOptions !== 'object' || Array.isArray(rawOptions)) {
+        return defaultPoiClusterOptions;
+    }
+
+    return {
+        chunkedLoading: typeof rawOptions.chunkedLoading === 'boolean' ? rawOptions.chunkedLoading : defaultPoiClusterOptions.chunkedLoading,
+        disableClusteringAtZoom: typeof rawOptions.disableClusteringAtZoom === 'number' && Number.isFinite(rawOptions.disableClusteringAtZoom)
+            ? rawOptions.disableClusteringAtZoom
+            : defaultPoiClusterOptions.disableClusteringAtZoom,
+        showCoverageOnHover: typeof rawOptions.showCoverageOnHover === 'boolean' ? rawOptions.showCoverageOnHover : defaultPoiClusterOptions.showCoverageOnHover,
+        spiderfyOnMaxZoom: typeof rawOptions.spiderfyOnMaxZoom === 'boolean' ? rawOptions.spiderfyOnMaxZoom : defaultPoiClusterOptions.spiderfyOnMaxZoom,
+    };
+}
+
 function toLayerLabel(fileNameWithoutExt) {
     const lowerName = fileNameWithoutExt.toLowerCase();
     if (labelByFileName[lowerName]) {
@@ -86,6 +109,8 @@ function applyPoiControlClass(control) {
 }
 
 async function getOverlayMaps() {
+    const appConfig = await getAppConfig();
+    const poiClusterOptions = getPoiClusterOptions(appConfig);
     const jsonFiles = await listPoiJsonFiles();
 
     const layersEntries = await Promise.all(jsonFiles.map(async (fileName) => {
@@ -111,12 +136,7 @@ async function getOverlayMaps() {
             if (isBase) {
                 layer = L.layerGroup(markers);
             } else {
-                layer = L.markerClusterGroup({
-                    chunkedLoading: true,
-                    disableClusteringAtZoom: 6,
-                    showCoverageOnHover: false,
-                    spiderfyOnMaxZoom: false,
-                });
+                layer = L.markerClusterGroup(poiClusterOptions);
                 layer.addLayers(markers);
             }
 
@@ -157,7 +177,7 @@ async function getOverlayMaps() {
 
     return {
         baseOverlays,
-      extraOverlays,
+        extraOverlays,
     };
 }
 

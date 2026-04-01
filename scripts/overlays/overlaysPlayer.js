@@ -33,14 +33,3 @@ function updateCharacterMarker(characterId, lat, lng) {
         characterMarkers[characterId] = marker;
     }
 }
-// Fonction pour récupérer les positions des personnages
-async function getPlayersLocations() {
-    const url = `/characterloc`;
-    try {
-        const response = await fetch(url);
-        let data = await response.json();
-        return data;
-    } catch (error) {
-        console.error(`Error fetching ${key} data:`, error);
-    }
-}

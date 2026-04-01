@@ -1,52 +1,28 @@
 import InitMap, { map } from "./map.js";
 import InitOverlayPoi from "./overlays/overlaysPoi.js";
 import InitOverlayCoord, { UpdateCoord } from "./overlays/overlaysCoord.js";
-import InitOverlayPlayer from "./overlays/overlaysPlayer.js";
-import { ensureDataDirectory, chooseDataDirectory, setDataDirectory } from "./modules/dataDirectory.js";
+import { setAppConfig } from "./modules/dataDirectory.js";
 
 const { ipcRenderer } = require("electron");
 
-const selectDataFolderButton = document.getElementById("selectDataFolderButton");
+async function bootstrap() {
+    //Init leaflet
+    await InitMap();
 
-function updateDataFolderLabel(folderPath) {
-    if (selectDataFolderButton) {
-        selectDataFolderButton.title = `Dossier data: ${folderPath}`;
-    }
-}
+    //Init Overlay Control
+    InitOverlayPoi(map);
+    InitOverlayCoord(map);
 
-//Init leaflet
-InitMap();
-
-//Init Overlay Control
-InitOverlayPoi(map);
-InitOverlayCoord(map);
-
-map.on("click", function (ev) {
-    UpdateCoord(ev, map);
-});
-
-ensureDataDirectory().then(updateDataFolderLabel).catch((error) => {
-    console.error("Unable to load data directory:", error);
-    if (selectDataFolderButton) {
-        selectDataFolderButton.title = "Dossier data: erreur de chargement";
-    }
-});
-
-if (selectDataFolderButton) {
-    selectDataFolderButton.addEventListener("click", async () => {
-        const selectedPath = await chooseDataDirectory();
-        if (selectedPath) {
-            updateDataFolderLabel(selectedPath);
-            window.location.reload();
-        }
+    map.on("click", function (ev) {
+        UpdateCoord(ev, map);
     });
 }
 
-ipcRenderer.on("data-directory-updated", (_event, selectedPath) => {
-    setDataDirectory(selectedPath);
-    updateDataFolderLabel(selectedPath);
-    window.location.reload();
+bootstrap().catch((error) => {
+    console.error("Unable to initialize map:", error);
 });
 
-//Interval Player Overlay
-//setInterval(InitOverlayPlayer, 5000);
+ipcRenderer.on("app-config-updated", (_event, config) => {
+    setAppConfig(config);
+    window.location.reload();
+});
