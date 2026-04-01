@@ -1,6 +1,14 @@
 const { ipcRenderer } = require('electron');
 
 let currentDataDirectory = null;
+let currentAppConfig = null;
+
+export async function getAppConfig() {
+    if (!currentAppConfig) {
+        currentAppConfig = await ipcRenderer.invoke('get-app-config');
+    }
+    return currentAppConfig;
+}
 
 export async function ensureDataDirectory() {
     if (!currentDataDirectory) {
@@ -20,6 +28,9 @@ export async function chooseDataDirectory() {
 export function setDataDirectory(dirPath) {
     if (dirPath) {
         currentDataDirectory = dirPath;
+        if (currentAppConfig && typeof currentAppConfig === 'object') {
+            currentAppConfig.dataDirectory = dirPath;
+        }
     }
 }
 

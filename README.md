@@ -9,6 +9,8 @@ Cartographer of Asheron's Call 2 is a simple, lively 2D map tool built using Ele
 - **Interactive Map**: Explore the vast world of Asheron's Call 2 through an interactive 2D map interface.
 - **POI Data Directory Picker**: Select the folder containing your POI `.json` files directly from the app (button or menu).
 - **Persistent Data Folder**: The selected POI folder is saved and restored automatically when the app restarts.
+- **Config File Auto-Setup**: A `config.json` file is created and validated automatically at startup.
+- **External Tiles Directory**: Tiles are loaded from a configurable external folder (`tilesDirectory`) instead of being bundled in the app package.
 - **Automatic JSON Discovery**: All `.json` files found in the selected data folder are loaded automatically.
 - **Base vs Additional POIs**: Built-in categories (Ringways, Gateways, PoI, Town, Outpost, Vault, Dungeon, City, Faction) are shown separately from extra JSON files.
 - **Additional POI Clustering**: Extra POIs are clustered with marker counts to keep the map smooth when many points are present.
@@ -49,6 +51,44 @@ These file names receive dedicated icons and appear under the **Base POIs** sect
 - `faction.json`
 
 Any other `.json` file is listed under **Additional POIs** and uses clustering.
+
+## Configuration File
+
+The app automatically creates and validates a `config.json` file at startup.
+
+- Development mode location: `out/config.json`
+- Packaged EXE location: next to the executable (`.../cartographe-ac2re.exe` and `.../config.json`)
+
+Default template:
+
+```json
+{
+   "dataDirectory": "<project-or-exe>/data",
+   "tilesDirectory": "<project-or-exe>/tiles",
+   "poiCluster": {
+      "chunkedLoading": true,
+      "disableClusteringAtZoom": 6,
+      "showCoverageOnHover": false,
+      "spiderfyOnMaxZoom": false
+   }
+}
+```
+
+Notes:
+
+- If `config.json` is missing, it is created automatically.
+- If it contains invalid or missing keys, defaults are restored for those keys.
+- `poiCluster` options are used for additional POI marker clustering.
+
+## Packaging and Tiles
+
+To speed up builds and reduce package size, the `tiles/` folder is excluded from Electron Forge packaging.
+
+This means:
+
+- You must provide a `tiles` folder externally.
+- By default, the app reads tiles from `tilesDirectory` in `config.json`.
+- For packaged builds, placing `tiles/` next to the EXE matches the default config.
 
 ## Installation
 

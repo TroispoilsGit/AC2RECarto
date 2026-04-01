@@ -13,15 +13,21 @@ function updateDataFolderLabel(folderPath) {
     }
 }
 
-//Init leaflet
-InitMap();
+async function bootstrap() {
+    //Init leaflet
+    await InitMap();
 
-//Init Overlay Control
-InitOverlayPoi(map);
-InitOverlayCoord(map);
+    //Init Overlay Control
+    InitOverlayPoi(map);
+    InitOverlayCoord(map);
 
-map.on("click", function (ev) {
-    UpdateCoord(ev, map);
+    map.on("click", function (ev) {
+        UpdateCoord(ev, map);
+    });
+}
+
+bootstrap().catch((error) => {
+    console.error("Unable to initialize map:", error);
 });
 
 ensureDataDirectory().then(updateDataFolderLabel).catch((error) => {
