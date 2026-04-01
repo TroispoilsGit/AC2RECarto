@@ -29,5 +29,13 @@
     "@electron-forge/publisher-github": "^7.11.1",
     "@electron/fuses": "^1.8.0",
     "electron": "^41.1.0"
+  },
+  "overrides": {
+    "@tootallnate/once": "^3.0.1",
+    "http-proxy-agent": "^7.0.2",
+    "make-fetch-happen": "^15.0.5",
+    "cacache": "^20.0.4",
+    "tar": "^7.5.13",
+    "tmp": "^0.2.5"
   }
 }
