@@ -1,17 +1,9 @@
 import InitMap, { map } from "./map.js";
 import InitOverlayPoi from "./overlays/overlaysPoi.js";
 import InitOverlayCoord, { UpdateCoord } from "./overlays/overlaysCoord.js";
-import { ensureDataDirectory, chooseDataDirectory, setDataDirectory } from "./modules/dataDirectory.js";
+import { setAppConfig } from "./modules/dataDirectory.js";
 
 const { ipcRenderer } = require("electron");
-
-const selectDataFolderButton = document.getElementById("selectDataFolderButton");
-
-function updateDataFolderLabel(folderPath) {
-    if (selectDataFolderButton) {
-        selectDataFolderButton.title = `Dossier data: ${folderPath}`;
-    }
-}
 
 async function bootstrap() {
     //Init leaflet
@@ -30,25 +22,7 @@ bootstrap().catch((error) => {
     console.error("Unable to initialize map:", error);
 });
 
-ensureDataDirectory().then(updateDataFolderLabel).catch((error) => {
-    console.error("Unable to load data directory:", error);
-    if (selectDataFolderButton) {
-        selectDataFolderButton.title = "Dossier data: erreur de chargement";
-    }
-});
-
-if (selectDataFolderButton) {
-    selectDataFolderButton.addEventListener("click", async () => {
-        const selectedPath = await chooseDataDirectory();
-        if (selectedPath) {
-            updateDataFolderLabel(selectedPath);
-            window.location.reload();
-        }
-    });
-}
-
-ipcRenderer.on("data-directory-updated", (_event, selectedPath) => {
-    setDataDirectory(selectedPath);
-    updateDataFolderLabel(selectedPath);
+ipcRenderer.on("app-config-updated", (_event, config) => {
+    setAppConfig(config);
     window.location.reload();
 });

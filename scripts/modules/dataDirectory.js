@@ -6,23 +6,28 @@ let currentAppConfig = null;
 export async function getAppConfig() {
     if (!currentAppConfig) {
         currentAppConfig = await ipcRenderer.invoke('get-app-config');
+        if (currentAppConfig && typeof currentAppConfig.dataDirectory === 'string' && currentAppConfig.dataDirectory.trim() !== '') {
+            currentDataDirectory = currentAppConfig.dataDirectory;
+        }
     }
     return currentAppConfig;
 }
 
 export async function ensureDataDirectory() {
     if (!currentDataDirectory) {
-        currentDataDirectory = await ipcRenderer.invoke('get-data-directory');
+        const config = await getAppConfig();
+        currentDataDirectory = config.dataDirectory;
     }
     return currentDataDirectory;
 }
 
-export async function chooseDataDirectory() {
-    const selectedPath = await ipcRenderer.invoke('choose-data-directory');
-    if (selectedPath) {
-        currentDataDirectory = selectedPath;
+export function setAppConfig(config) {
+    if (config && typeof config === 'object') {
+        currentAppConfig = config;
+        if (typeof config.dataDirectory === 'string' && config.dataDirectory.trim() !== '') {
+            currentDataDirectory = config.dataDirectory;
+        }
     }
-    return selectedPath;
 }
 
 export function setDataDirectory(dirPath) {

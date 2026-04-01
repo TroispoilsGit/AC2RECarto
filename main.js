@@ -7,6 +7,9 @@ const CONFIG_KEY_DATA_DIR = 'dataDirectory'
 const CONFIG_KEY_POI_CLUSTER = 'poiCluster'
 const CONFIG_KEY_TILES_DIR = 'tilesDirectory'
 
+let mainWindow = null
+let configWindow = null
+
 function getDefaultDataDirectory() {
     return path.join(app.getAppPath(), 'data')
 }
@@ -116,7 +119,63 @@ function loadConfig() {
 
 function saveConfig(config) {
     const configPath = getConfigPath()
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8')
+    const sanitized = sanitizeConfig(config)
+    fs.writeFileSync(configPath, JSON.stringify(sanitized, null, 2), 'utf8')
+}
+
+function mergeConfigPatch(currentConfig, patch) {
+    const merged = {
+        ...currentConfig,
+        [CONFIG_KEY_POI_CLUSTER]: {
+            ...currentConfig[CONFIG_KEY_POI_CLUSTER]
+        }
+    }
+
+    if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+        return sanitizeConfig(merged)
+    }
+
+    if (typeof patch[CONFIG_KEY_DATA_DIR] === 'string') {
+        merged[CONFIG_KEY_DATA_DIR] = patch[CONFIG_KEY_DATA_DIR]
+    }
+
+    if (typeof patch[CONFIG_KEY_TILES_DIR] === 'string') {
+        merged[CONFIG_KEY_TILES_DIR] = patch[CONFIG_KEY_TILES_DIR]
+    }
+
+    const patchPoiCluster = patch[CONFIG_KEY_POI_CLUSTER]
+    if (patchPoiCluster && typeof patchPoiCluster === 'object' && !Array.isArray(patchPoiCluster)) {
+        if (typeof patchPoiCluster.chunkedLoading === 'boolean') {
+            merged[CONFIG_KEY_POI_CLUSTER].chunkedLoading = patchPoiCluster.chunkedLoading
+        }
+        if (typeof patchPoiCluster.disableClusteringAtZoom === 'number' && Number.isFinite(patchPoiCluster.disableClusteringAtZoom)) {
+            merged[CONFIG_KEY_POI_CLUSTER].disableClusteringAtZoom = patchPoiCluster.disableClusteringAtZoom
+        }
+        if (typeof patchPoiCluster.showCoverageOnHover === 'boolean') {
+            merged[CONFIG_KEY_POI_CLUSTER].showCoverageOnHover = patchPoiCluster.showCoverageOnHover
+        }
+        if (typeof patchPoiCluster.spiderfyOnMaxZoom === 'boolean') {
+            merged[CONFIG_KEY_POI_CLUSTER].spiderfyOnMaxZoom = patchPoiCluster.spiderfyOnMaxZoom
+        }
+    }
+
+    return sanitizeConfig(merged)
+}
+
+function broadcastConfigUpdated(updatedConfig) {
+    for (const win of BrowserWindow.getAllWindows()) {
+        if (!win.isDestroyed()) {
+            win.webContents.send('app-config-updated', updatedConfig)
+        }
+    }
+}
+
+function updateConfig(patch) {
+    const currentConfig = loadConfig()
+    const nextConfig = mergeConfigPatch(currentConfig, patch)
+    saveConfig(nextConfig)
+    broadcastConfigUpdated(nextConfig)
+    return nextConfig
 }
 
 function getSavedDataDirectory() {
@@ -128,16 +187,10 @@ function getSavedDataDirectory() {
     return getDefaultDataDirectory()
 }
 
-function setSavedDataDirectory(dirPath) {
-    const config = loadConfig()
-    config[CONFIG_KEY_DATA_DIR] = dirPath
-    saveConfig(config)
-}
-
-async function chooseDataDirectory(parentWindow) {
-    const selected = await dialog.showOpenDialog(parentWindow, {
-        title: 'Select POI data directory',
-        defaultPath: getSavedDataDirectory(),
+async function openDirectoryDialog(options = {}) {
+    const selected = await dialog.showOpenDialog(mainWindow, {
+        title: typeof options.title === 'string' && options.title.trim() !== '' ? options.title : 'Select directory',
+        defaultPath: typeof options.defaultPath === 'string' && options.defaultPath.trim() !== '' ? options.defaultPath : undefined,
         properties: ['openDirectory']
     })
 
@@ -145,27 +198,48 @@ async function chooseDataDirectory(parentWindow) {
         return null
     }
 
-    const dirPath = selected.filePaths[0]
-    setSavedDataDirectory(dirPath)
-    return dirPath
+    return selected.filePaths[0]
+}
+
+function openConfigWindow() {
+    if (configWindow && !configWindow.isDestroyed()) {
+        configWindow.focus()
+        return
+    }
+
+    configWindow = new BrowserWindow({
+        width: 520,
+        height: 500,
+        resizable: false,
+        parent: mainWindow,
+        modal: false,
+        autoHideMenuBar: true,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            enableRemoteModule: true
+        }
+    })
+
+    configWindow.on('closed', () => {
+        configWindow = null
+    })
+
+    configWindow.loadFile('config.html')
 }
 
 function buildApplicationMenu() {
     const template = [
         {
-            label: 'Data',
+            label: 'File',
             submenu: [
                 {
-                    label: 'Select POI data directory...',
-                    accelerator: 'CmdOrCtrl+Shift+O',
-                    click: async (_, browserWindow) => {
-                        const targetWindow = browserWindow || BrowserWindow.getFocusedWindow()
-                        const selectedPath = await chooseDataDirectory(targetWindow)
-                        if (selectedPath && targetWindow && !targetWindow.isDestroyed()) {
-                            targetWindow.webContents.send('data-directory-updated', selectedPath)
-                        }
-                    }
-                }
+                    label: 'Config',
+                    accelerator: 'CmdOrCtrl+,',
+                    click: () => openConfigWindow()
+                },
+                { type: 'separator' },
+                { role: 'quit', label: 'Exit' }
             ]
         }
     ]
@@ -174,11 +248,11 @@ function buildApplicationMenu() {
     Menu.setApplicationMenu(menu)
 }
 
-const createWindow = () => {
-    const win = new BrowserWindow({
+function createWindow() {
+    mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
-        autoHideMenuBar: true,
+        autoHideMenuBar: false,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
@@ -186,18 +260,16 @@ const createWindow = () => {
         }
     })
 
-    win.loadFile('index.html')
+    mainWindow.loadFile('index.html')
 }
 
 app.whenReady().then(() => {
     ensureConfigFile()
 
     ipcMain.handle('get-app-config', () => loadConfig())
+    ipcMain.handle('update-app-config', (_event, patch) => updateConfig(patch))
+    ipcMain.handle('open-directory-dialog', (_event, options) => openDirectoryDialog(options))
     ipcMain.handle('get-data-directory', () => getSavedDataDirectory())
-    ipcMain.handle('choose-data-directory', async (event) => {
-        const window = BrowserWindow.fromWebContents(event.sender)
-        return chooseDataDirectory(window)
-    })
 
     buildApplicationMenu()
     createWindow()
