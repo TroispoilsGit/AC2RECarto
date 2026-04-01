@@ -9,6 +9,11 @@ const customIcons = {
     iconSize: [9, 9],
     iconAnchor: [4.5, 4.5],
   }),
+  redCrossAdditionalFullIcon: new L.Icon({
+    iconUrl: "./icons/red_cross_additional_full.png",
+    iconSize: [9, 9],
+    iconAnchor: [4.5, 4.5],
+  }),
   blueCircleFullIcon: new L.Icon({
     iconUrl: "./icons/blue_circle_full.png",
     iconSize: [9, 9],

@@ -98,6 +98,30 @@ If your shell does not support `${PWD}` (for example, Windows Command Prompt), u
 docker run --rm -v "C:/path/to/AC2RECarto/out:/app/out" ac2re-carto-build
 ```
 
+## Windows Smart App Control (EXE blocked)
+
+If Windows shows "Smart App Control blocked a potentially dangerous app", the app is usually unsigned (or signed without enough reputation).
+
+For distribution builds, sign the executable with an Authenticode certificate.
+Electron Forge in this project will sign automatically when these environment variables are set:
+
+- `WIN_CSC_LINK` or `WINDOWS_CERTIFICATE_FILE`: path to your `.pfx` certificate
+- `WIN_CSC_KEY_PASSWORD` or `WINDOWS_CERTIFICATE_PASSWORD`: certificate password
+- Optional: `WINDOWS_TIMESTAMP_SERVER` (defaults to `http://timestamp.digicert.com`)
+
+Example (PowerShell):
+
+```powershell
+$env:WIN_CSC_LINK="C:\certs\my-cert.pfx"
+$env:WIN_CSC_KEY_PASSWORD="your-password"
+npm run make
+```
+
+Notes:
+
+- Smart App Control/SmartScreen reputation can still require time on newly signed apps.
+- EV code-signing certificates generally build trust faster.
+
 ## Contributing
 
 Contributions are welcome! If you'd like to contribute to Cartographer of Asheron's Call 2, please follow these guidelines:
