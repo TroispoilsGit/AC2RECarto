@@ -78,6 +78,26 @@ To run Cartographer of Asheron's Call 2 locally, follow these steps:
    yarn start
    ```
 
+## Build with Docker
+
+You can package the application inside Docker to automate compilation in a reproducible environment.
+
+1. Build the Docker image:
+   ```bash
+   docker build -t ac2re-carto-build .
+   ```
+
+2. Run the container and export build artifacts to your local `out/` folder:
+   ```bash
+   docker run --rm -v "${PWD}/out:/app/out" ac2re-carto-build
+   ```
+
+If your shell does not support `${PWD}` (for example, Windows Command Prompt), use an absolute path:
+
+```bash
+docker run --rm -v "C:/path/to/AC2RECarto/out:/app/out" ac2re-carto-build
+```
+
 ## Contributing
 
 Contributions are welcome! If you'd like to contribute to Cartographer of Asheron's Call 2, please follow these guidelines:
