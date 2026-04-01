@@ -1,6 +1,5 @@
 import initPoImarker, { listPoiJsonFiles } from '../modules/poi.js';
 import customIcons from '../modules/iconsMap.js';
-import npcLocOverlay from "./overlaysNpc.js";
 
 var baseLayerControl = null;
 var extraLayerControl = null;
@@ -157,7 +156,7 @@ async function getOverlayMaps() {
 
     return {
         baseOverlays,
-      extraOverlays,
+        extraOverlays,
     };
 }
 

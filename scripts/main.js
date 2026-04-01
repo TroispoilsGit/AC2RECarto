@@ -1,7 +1,6 @@
 import InitMap, { map } from "./map.js";
 import InitOverlayPoi from "./overlays/overlaysPoi.js";
 import InitOverlayCoord, { UpdateCoord } from "./overlays/overlaysCoord.js";
-import InitOverlayPlayer from "./overlays/overlaysPlayer.js";
 import { ensureDataDirectory, chooseDataDirectory, setDataDirectory } from "./modules/dataDirectory.js";
 
 const { ipcRenderer } = require("electron");
@@ -47,6 +46,3 @@ ipcRenderer.on("data-directory-updated", (_event, selectedPath) => {
     updateDataFolderLabel(selectedPath);
     window.location.reload();
 });
-
-//Interval Player Overlay
-//setInterval(InitOverlayPlayer, 5000);
