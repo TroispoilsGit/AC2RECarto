@@ -2,180 +2,338 @@
 
 ![Cartographer Demo](demo.gif)
 
-Cartographer of Asheron's Call 2 is a simple, lively 2D map tool built using ElectronJS and the Leaflet library. It aims to provide players of Asheron's Call 2 with an intuitive way to explore the game world and plan their adventures.
+An interactive 2D map viewer for **Asheron's Call 2**, built with [Electron](https://www.electronjs.org/) and [Leaflet](https://leafletjs.com/). Browse the game world, toggle Points of Interest by category, and click anywhere to display in-game coordinates and LandBlock IDs.
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+  - [1. Clone the Repository](#1-clone-the-repository)
+  - [2. Retrieve the Tiles Folder](#2-retrieve-the-tiles-folder)
+  - [3. Install Dependencies](#3-install-dependencies)
+  - [4. Run the Application](#4-run-the-application)
+- [Configuration](#configuration)
+  - [Config File Location](#config-file-location)
+  - [Default Configuration](#default-configuration)
+  - [Configuration Options](#configuration-options)
+  - [Configuration Window](#configuration-window)
+- [POI Data Format](#poi-data-format)
+  - [Base Categories](#base-categories)
+  - [Additional POIs](#additional-pois)
+- [Project Structure](#project-structure)
+- [Building & Packaging](#building--packaging)
+  - [Package with Electron Forge](#package-with-electron-forge)
+  - [Build with Docker](#build-with-docker)
+  - [Code Signing (Windows)](#code-signing-windows)
+- [Tests](#tests)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+
+---
 
 ## Features
 
-- **Interactive Map**: Explore the vast world of Asheron's Call 2 through an interactive 2D map interface.
-- **POI Data Directory Picker**: Select the folder containing your POI `.json` files directly from the app (button or menu).
-- **Persistent Data Folder**: The selected POI folder is saved and restored automatically when the app restarts.
-- **Config File Auto-Setup**: A `config.json` file is created and validated automatically at startup.
-- **External Tiles Directory**: Tiles are loaded from a configurable external folder (`tilesDirectory`) instead of being bundled in the app package.
-- **Automatic JSON Discovery**: All `.json` files found in the selected data folder are loaded automatically.
-- **Base vs Additional POIs**: Built-in categories (Ringways, Gateways, PoI, Town, Outpost, Vault, Dungeon, City, Faction) are shown separately from extra JSON files.
-- **Additional POI Clustering**: Extra POIs are clustered with marker counts to keep the map smooth when many points are present.
-- **Zoom and Pan**: Zoom in and out, pan across the map to focus on specific regions.
-- **Responsive Design**: Works seamlessly on desktop and mobile devices for convenience.
-- **Simple and Lightweight**: Built with simplicity and performance in mind, ensuring a smooth user experience.
+- **Interactive Leaflet Map** — Pan, zoom (levels 1–8), and explore the full Asheron's Call 2 world through a tiled map.
+- **Point of Interest Overlays** — Toggle 9 built-in POI categories (Ringways, Gateways, Towns, Cities, Outposts, Vaults, Dungeons, Factions, generic PoI), each with a dedicated icon.
+- **Custom POI Support** — Drop any additional `.json` file into the data folder; it is automatically discovered, loaded, and displayed with marker clustering.
+- **Coordinate Display** — Click anywhere on the map to see the cardinal coordinates (e.g. `42.5N 18.3E`) and the LandBlock ID (`0x2A12FFFF`).
+- **Configuration Window** — Edit data directory, tiles directory, and clustering options from a built-in settings panel (`Ctrl+,` or *File → Config*).
+- **Auto-Setup** — A `config.json` is created and validated automatically on first launch; invalid or missing keys are restored to defaults.
+- **External Tiles** — Map tiles are loaded from a configurable directory, keeping the app package lightweight.
+- **Persistent Settings** — All configuration changes are saved to disk and restored on restart.
 
-## POI Data Format
+---
 
-Each POI file must be a JSON array of objects containing coordinates:
+## Prerequisites
 
-```json
-[
-   {
-      "x": 120.5,
-      "y": -42.0,
-      "description": "Optional popup text"
-   }
-]
+| Tool | Version |
+|------|---------|
+| [Node.js](https://nodejs.org/) | **20** or later |
+| [npm](https://www.npmjs.com/) | Bundled with Node.js |
+| [Git](https://git-scm.com/) | Any recent version |
+
+---
+
+## Getting Started
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/TroispoilsGit/Ac2reCarto.git
+cd Ac2reCarto
 ```
 
-- `x`: X coordinate (required)
-- `y`: Y coordinate (required)
-- `description`: Popup text (optional)
+### 2. Retrieve the Tiles Folder
 
-### Base category file names
+> **⚠️ Important:** The `tiles/` folder contains all the map tile images required by the application. Due to its size, make sure it is present in the project root after cloning.
+>
+> If you downloaded a release archive or a shallow clone that does not include the tiles, you **must** copy the `tiles/` folder from the full repository into the project root before running the app. Without it, the map will not display any imagery.
 
-These file names receive dedicated icons and appear under the **Base POIs** section:
+The expected structure is:
 
-- `ringways.json`
-- `gateways.json`
-- `poi.json`
-- `town.json`
-- `outpost.json`
-- `vault.json`
-- `dungeon.json`
-- `city.json`
-- `faction.json`
+```
+AC2RECarto/
+├── tiles/
+│   ├── 1/
+│   ├── 2/
+│   ├── ...
+│   └── 8/
+├── data/
+├── scripts/
+└── ...
+```
 
-Any other `.json` file is listed under **Additional POIs** and uses clustering.
+### 3. Install Dependencies
 
-## Configuration File
+```bash
+npm install
+```
 
-The app automatically creates and validates a `config.json` file at startup.
+### 4. Run the Application
 
-- Development mode location: `out/config.json`
-- Packaged EXE location: next to the executable (`.../cartographe-ac2re.exe` and `.../config.json`)
+```bash
+npm start
+```
 
-Default template:
+The Electron window will open with the interactive map. Use **File → Config** (or `Ctrl+,`) to customize paths and clustering options.
+
+---
+
+## Configuration
+
+### Config File Location
+
+| Mode | Path |
+|------|------|
+| Development | `out/config.json` (created automatically) |
+| Packaged (EXE) | Next to the executable, e.g. `.../cartographe-ac2re.exe` → `.../config.json` |
+
+### Default Configuration
 
 ```json
 {
-   "dataDirectory": "<project-or-exe>/data",
-   "tilesDirectory": "<project-or-exe>/tiles",
-   "poiCluster": {
-      "chunkedLoading": true,
-      "disableClusteringAtZoom": 6,
-      "showCoverageOnHover": false,
-      "spiderfyOnMaxZoom": false
-   }
+  "dataDirectory": "<app-root>/data",
+  "tilesDirectory": "<app-root>/tiles",
+  "poiCluster": {
+    "chunkedLoading": true,
+    "disableClusteringAtZoom": 6,
+    "showCoverageOnHover": false,
+    "spiderfyOnMaxZoom": false
+  }
 }
 ```
 
-Notes:
+### Configuration Options
 
-- If `config.json` is missing, it is created automatically.
-- If it contains invalid or missing keys, defaults are restored for those keys.
-- `poiCluster` options are used for additional POI marker clustering.
+| Key | Type | Description |
+|-----|------|-------------|
+| `dataDirectory` | `string` | Path to the folder containing POI `.json` files. |
+| `tilesDirectory` | `string` | Path to the folder containing map tile images (`{z}/{x}/{y}.png`). |
+| `poiCluster.chunkedLoading` | `boolean` | Load clustered markers in chunks to avoid UI freezing. |
+| `poiCluster.disableClusteringAtZoom` | `number` | Zoom level at which clustering is disabled and individual markers are shown. |
+| `poiCluster.showCoverageOnHover` | `boolean` | Show the bounds of a cluster on hover. |
+| `poiCluster.spiderfyOnMaxZoom` | `boolean` | Spiderfy overlapping markers at maximum zoom. |
 
-## Packaging and Tiles
+### Configuration Window
 
-To speed up builds and reduce package size, the `tiles/` folder is excluded from Electron Forge packaging.
+Open via **File → Config** or `Ctrl+,`. The window lets you:
 
-This means:
+- Browse and select the **data directory** and **tiles directory**.
+- Adjust **POI clustering** options.
+- **Reset to defaults** with a single click.
 
-- You must provide a `tiles` folder externally.
-- By default, the app reads tiles from `tilesDirectory` in `config.json`.
-- For packaged builds, placing `tiles/` next to the EXE matches the default config.
+All changes are auto-saved and applied immediately.
 
-## Installation
+---
 
-To run Cartographer of Asheron's Call 2 locally, follow these steps:
+## POI Data Format
 
-1. Clone this repository to your local machine.
-   ```bash
-   git clone https://github.com/TroispoilsGit/Ac2reCarto.git
-   ```
+Each POI file is a JSON array of objects:
 
-2. Navigate to the project directory.
-   ```bash
-   cd Ac2reCarto
-   ```
-
-3. Install dependencies using npm or yarn.
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
-
-4. Start the application.
-   ```bash
-   npm start
-   # or
-   yarn start
-   ```
-
-## Build with Docker
-
-You can package the application inside Docker to automate compilation in a reproducible environment.
-
-1. Build the Docker image:
-   ```bash
-   docker build -t ac2re-carto-build .
-   ```
-
-2. Run the container and export build artifacts to your local `out/` folder:
-   ```bash
-   docker run --rm -v "${PWD}/out:/app/out" ac2re-carto-build
-   ```
-
-If your shell does not support `${PWD}` (for example, Windows Command Prompt), use an absolute path:
-
-```bash
-docker run --rm -v "C:/path/to/AC2RECarto/out:/app/out" ac2re-carto-build
+```json
+[
+  {
+    "x": 120.5,
+    "y": -42.0,
+    "description": "Optional popup text"
+  }
+]
 ```
 
-## Windows Smart App Control (EXE blocked)
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `x` | `number` | Yes | X coordinate on the map. |
+| `y` | `number` | Yes | Y coordinate on the map. |
+| `description` | `string` | No | Text displayed in the marker popup. Defaults to the file name. |
 
-If Windows shows "Smart App Control blocked a potentially dangerous app", the app is usually unsigned (or signed without enough reputation).
+### Base Categories
 
-For distribution builds, sign the executable with an Authenticode certificate.
-Electron Forge in this project will sign automatically when these environment variables are set:
+These file names are recognized automatically with dedicated icons and appear under the **Base POIs** overlay panel:
 
-- `WIN_CSC_LINK` or `WINDOWS_CERTIFICATE_FILE`: path to your `.pfx` certificate
-- `WIN_CSC_KEY_PASSWORD` or `WINDOWS_CERTIFICATE_PASSWORD`: certificate password
-- Optional: `WINDOWS_TIMESTAMP_SERVER` (defaults to `http://timestamp.digicert.com`)
+| File | Category | Icon |
+|------|----------|------|
+| `ringways.json` | Ringways | Blue circle (void) |
+| `gateways.json` | Gateways | Blue circle (full) |
+| `poi.json` | PoI | Blue cross |
+| `town.json` | Town | Yellow square (full) |
+| `outpost.json` | Outpost | Yellow square (void) |
+| `vault.json` | Vault | Red cross (full) |
+| `dungeon.json` | Dungeon | Red cross (void) |
+| `city.json` | City | Yellow crown |
+| `faction.json` | Faction | Grey square |
 
-Example (PowerShell):
+### Additional POIs
 
-```powershell
-$env:WIN_CSC_LINK="C:\certs\my-cert.pfx"
-$env:WIN_CSC_KEY_PASSWORD="your-password"
+Any other `.json` file placed in the data directory is listed under **Additional POIs**. These markers use **clustering** (configurable via `poiCluster` settings) to keep the map performant when many points are present.
+
+---
+
+## Project Structure
+
+```
+AC2RECarto/
+├── main.js                        # Electron main process (window, menu, config, IPC)
+├── index.html                     # Main renderer page (map)
+├── config.html                    # Configuration window
+├── package.json
+├── forge.config.js                # Electron Forge packaging config
+├── Dockerfile                     # Reproducible build environment
+│
+├── data/                          # Default POI JSON files
+│   ├── city.json
+│   ├── dungeon.json
+│   ├── faction.json
+│   ├── gateways.json
+│   ├── outpost.json
+│   ├── poi.json
+│   ├── ringways.json
+│   ├── town.json
+│   └── vault.json
+│
+├── icons/                         # Marker icon images (PNG)
+│
+├── scripts/
+│   ├── main.js                    # Renderer entry point (bootstrap)
+│   ├── map.js                     # Leaflet map initialization & tile layer
+│   ├── configWindow.js            # Config window renderer logic
+│   ├── modules/
+│   │   ├── dataDirectory.js       # App config & data directory management
+│   │   ├── iconsMap.js            # Custom Leaflet icon definitions
+│   │   ├── math.js                # Coordinate conversion & LandBlock calculation
+│   │   └── poi.js                 # POI file loading & listing
+│   └── overlays/
+│       ├── overlaysCoord.js       # Coordinate display overlay
+│       ├── overlaysNpc.js         # NPC markers overlay (server integration)
+│       ├── overlaysPlayer.js      # Player markers overlay (server integration)
+│       └── overlaysPoi.js         # POI layer controls (base + additional)
+│
+├── style/
+│   └── style.css                  # Map and overlay styles
+│
+├── tests/
+│   └── json-files.test.js         # Validates POI JSON file structure
+│
+└── tiles/                         # Map tile images (z/x/y.png) — see "Retrieve the Tiles Folder"
+    ├── 1/
+    ├── 2/
+    ├── ...
+    └── 8/
+```
+
+---
+
+## Building & Packaging
+
+### Package with Electron Forge
+
+```bash
+# Package (unpacked output in out/)
+npm run package
+
+# Create distributable installer
 npm run make
 ```
 
-Notes:
+> **Note:** The `tiles/` folder is **excluded** from the Electron Forge package to reduce build size. For packaged builds, place the `tiles/` folder next to the generated executable.
 
-- Smart App Control/SmartScreen reputation can still require time on newly signed apps.
-- EV code-signing certificates generally build trust faster.
+### Build with Docker
+
+A Dockerfile is provided for reproducible builds:
+
+```bash
+# Build the image
+docker build -t ac2re-carto-build .
+
+# Run and export artifacts to out/
+docker run --rm -v "${PWD}/out:/app/out" ac2re-carto-build
+```
+
+On Windows Command Prompt (no `${PWD}` support), use an absolute path:
+
+```cmd
+docker run --rm -v "C:\path\to\AC2RECarto\out:/app/out" ac2re-carto-build
+```
+
+### Code Signing (Windows)
+
+If Windows blocks the EXE with **Smart App Control**, the application is likely unsigned. Electron Forge signs automatically when these environment variables are set:
+
+| Variable | Description |
+|----------|-------------|
+| `WIN_CSC_LINK` / `WINDOWS_CERTIFICATE_FILE` | Path to your `.pfx` certificate |
+| `WIN_CSC_KEY_PASSWORD` / `WINDOWS_CERTIFICATE_PASSWORD` | Certificate password |
+| `WINDOWS_TIMESTAMP_SERVER` *(optional)* | Timestamp server URL (defaults to `http://timestamp.digicert.com`) |
+
+Example:
+
+```powershell
+$env:WIN_CSC_LINK = "C:\certs\my-cert.pfx"
+$env:WIN_CSC_KEY_PASSWORD = "your-password"
+npm run make
+```
+
+> SmartScreen reputation may still take time to build for newly signed apps. EV code-signing certificates build trust faster.
+
+---
+
+## Tests
+
+Run the test suite to validate POI data files:
+
+```bash
+npm test
+```
+
+Tests verify that:
+- The `data/` directory exists.
+- All `.json` files contain valid JSON arrays.
+- Each POI entry has finite `x` and `y` coordinates.
+
+---
 
 ## Contributing
 
-Contributions are welcome! If you'd like to contribute to Cartographer of Asheron's Call 2, please follow these guidelines:
+Contributions are welcome! To get started:
 
 1. Fork the repository and create your branch from `main`.
-2. Make your changes and ensure they align with the project's coding style.
-3. Test your changes thoroughly.
+2. Make your changes following the existing code style.
+3. Run `npm test` to validate POI data integrity.
 4. Open a pull request with a clear description of your changes.
+
+---
 
 ## License
 
-This project is licensed under the ISC License - see the [LICENSE](https://www.isc.org/licenses/) file for details.
+This project is licensed under the [ISC License](https://www.isc.org/licenses/).
+
+---
 
 ## Acknowledgments
 
-- Thanks to the ElectronJS and Leaflet communities for providing excellent tools and documentation.
-- Inspiration drawn from the vibrant world of Asheron's Call 2 and its dedicated community.
+- [Electron](https://www.electronjs.org/) and [Leaflet](https://leafletjs.com/) communities for their outstanding tools and documentation.
+- The vibrant Asheron's Call 2 community for keeping Dereth alive.
