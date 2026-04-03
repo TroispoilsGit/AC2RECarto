@@ -197,14 +197,18 @@ Any other `.json` file placed in the data directory is listed under **Additional
 
 ```
 AC2RECarto/
-├── main.js                        # Electron main process (window, menu, config, IPC)
-├── index.html                     # Main renderer page (map)
-├── config.html                    # Configuration window
+├── main.js                          # Electron entry point — IPC handlers & app lifecycle only
+├── index.html                       # Main renderer page (map)
+├── config.html                      # Configuration window
 ├── package.json
-├── forge.config.js                # Electron Forge packaging config
-├── Dockerfile                     # Reproducible build environment
+├── forge.config.js                  # Electron Forge packaging config
+├── Dockerfile                       # Reproducible build environment
 │
-├── data/                          # Default POI JSON files
+├── electron/                        # Main-process modules (Node.js / Electron only)
+│   ├── configStore.js               # Config file I/O, defaults, sanitization & broadcast
+│   └── windowManager.js             # Window creation, app menu & directory-picker dialog
+│
+├── data/                            # Default POI JSON files
 │   ├── city.json
 │   ├── dungeon.json
 │   ├── faction.json
@@ -215,30 +219,30 @@ AC2RECarto/
 │   ├── town.json
 │   └── vault.json
 │
-├── icons/                         # Marker icon images (PNG)
+├── icons/                           # Marker icon images (PNG)
 │
-├── scripts/
-│   ├── main.js                    # Renderer entry point (bootstrap)
-│   ├── map.js                     # Leaflet map initialization & tile layer
-│   ├── configWindow.js            # Config window renderer logic
+├── scripts/                         # Renderer-process scripts
+│   ├── app.js                       # Renderer entry point — bootstrap map & overlays
+│   ├── map.js                       # Leaflet map creation & tile layer
+│   ├── configWindow.js              # Config window renderer logic
 │   ├── modules/
-│   │   ├── dataDirectory.js       # App config & data directory management
-│   │   ├── iconsMap.js            # Custom Leaflet icon definitions
-│   │   ├── math.js                # Coordinate conversion & LandBlock calculation
-│   │   └── poi.js                 # POI file loading & listing
+│   │   ├── appConfig.js             # In-memory config cache, IPC fetch & update helpers
+│   │   ├── icons.js                 # Custom Leaflet icon definitions
+│   │   ├── coordinates.js           # Cardinal coordinate & LandBlock ID calculations
+│   │   └── dataLoader.js            # POI JSON file loading & directory listing
 │   └── overlays/
-│       ├── overlaysCoord.js       # Coordinate display overlay
-│       ├── overlaysNpc.js         # NPC markers overlay (server integration)
-│       ├── overlaysPlayer.js      # Player markers overlay (server integration)
-│       └── overlaysPoi.js         # POI layer controls (base + additional)
+│       ├── coordOverlay.js          # Coordinate display overlay (click → coords)
+│       ├── npcOverlay.js            # NPC markers overlay (server integration, WIP)
+│       ├── playerOverlay.js         # Player markers overlay (server integration, WIP)
+│       └── poiOverlay.js            # POI layer controls (base + additional categories)
 │
 ├── style/
-│   └── style.css                  # Map and overlay styles
+│   └── style.css                    # Map and overlay styles
 │
 ├── tests/
-│   └── json-files.test.js         # Validates POI JSON file structure
+│   └── json-files.test.js           # Validates POI JSON file structure
 │
-└── tiles/                         # Map tile images (z/x/y.png) — see "Retrieve the Tiles Folder"
+└── tiles/                           # Map tile images (z/x/y.png) — see "Retrieve the Tiles Folder"
     ├── 1/
     ├── 2/
     ├── ...
